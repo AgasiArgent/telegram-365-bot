@@ -1,0 +1,12 @@
+# Web-only requirements for development/testing
+# Use this when you only need to test the web admin panel
+
+# Web Framework
+Flask>=3.0.0
+Werkzeug>=3.0.0
+
+# Database
+SQLAlchemy>=2.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
