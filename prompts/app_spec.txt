@@ -1,0 +1,293 @@
+<project_specification>
+  <project_name>telegram-365-bot</project_name>
+
+  <overview>
+    Telegram-бот для ежедневной отправки текстовых сообщений в течение 365 дней. Пользователь запускает бота, получает приветственное сообщение, затем каждый день в определённое время получает сообщение дня. После 365-го дня цикл начинается заново. Администратор управляет контентом через Telegram-команды и веб-панель.
+  </overview>
+
+  <technology_stack>
+    <backend>
+      <language>Python 3.11+</language>
+      <framework>aiogram 3.x</framework>
+      <database>PostgreSQL</database>
+      <scheduler>APScheduler</scheduler>
+      <web_framework>Flask + Jinja2</web_framework>
+    </backend>
+    <frontend>
+      <templates>HTML/CSS + Jinja2</templates>
+      <styling>Minimal CSS (clean, functional design)</styling>
+    </frontend>
+  </technology_stack>
+
+  <prerequisites>
+    <environment_setup>
+      - Python 3.11 or higher
+      - PostgreSQL database
+      - Telegram Bot Token (from @BotFather)
+      - Virtual environment recommended
+    </environment_setup>
+  </prerequisites>
+
+  <feature_count>75</feature_count>
+
+  <security_and_access_control>
+    <user_roles>
+      <role name="user">
+        <permissions>
+          - Start bot and receive welcome message
+          - Receive daily messages automatically
+          - No other interactions available
+        </permissions>
+      </role>
+      <role name="admin">
+        <permissions>
+          - Access admin commands in Telegram via secret password
+          - View and edit welcome message
+          - View and edit any day's message
+          - Full access to web admin panel
+        </permissions>
+      </role>
+    </user_roles>
+    <authentication>
+      <telegram_admin>Secret password command to unlock admin access</telegram_admin>
+      <web_panel>Simple password authentication</web_panel>
+    </authentication>
+  </security_and_access_control>
+
+  <core_features>
+    <user_bot_interaction>
+      - User sends /start command
+      - Bot sends welcome message
+      - Bot automatically detects user timezone
+      - User receives daily message at scheduled time (day-specific)
+      - After blocking and returning, user continues from same day
+      - After day 365, cycle restarts from day 1
+    </user_bot_interaction>
+
+    <admin_telegram_commands>
+      - Secret password command to become admin
+      - View current welcome message
+      - Edit welcome message
+      - View message for specific day (1-365)
+      - Edit message for specific day
+    </admin_telegram_commands>
+
+    <admin_web_panel>
+      - Login page with password authentication
+      - Dashboard with list of all 365 messages
+      - Edit form for each message with:
+        - Text content (textarea)
+        - Send time (time picker)
+        - Character counter (max 4096)
+        - Preview button (shows Telegram-style preview)
+      - Warning indicators for empty messages
+      - Save confirmation
+      - Logout functionality
+    </admin_web_panel>
+
+    <message_scheduler>
+      - APScheduler runs in background
+      - Checks every minute for messages to send
+      - Considers user timezone for delivery time
+      - Each day has its own send time
+      - Handles timezone conversion correctly
+    </message_scheduler>
+
+    <data_validation>
+      - Message text limited to 4096 characters (Telegram limit)
+      - Warning for days without messages
+      - Time format validation
+      - Empty message prevention on send
+    </data_validation>
+  </core_features>
+
+  <database_schema>
+    <tables>
+      <users>
+        - id (PK, serial)
+        - telegram_id (bigint, unique)
+        - username (varchar, nullable)
+        - timezone (varchar, default 'UTC')
+        - current_day (int, default 1)
+        - started_at (timestamp)
+        - last_message_date (date, nullable)
+        - is_active (boolean, default true)
+        - created_at (timestamp)
+        - updated_at (timestamp)
+      </users>
+
+      <messages>
+        - id (PK, serial)
+        - day_number (int, unique, 1-365)
+        - content (text)
+        - send_time (time, default '09:00')
+        - created_at (timestamp)
+        - updated_at (timestamp)
+      </messages>
+
+      <settings>
+        - id (PK, serial)
+        - key (varchar, unique)
+        - value (text)
+        - updated_at (timestamp)
+      </settings>
+
+      <admins>
+        - id (PK, serial)
+        - telegram_id (bigint, unique)
+        - granted_at (timestamp)
+      </admins>
+    </tables>
+  </database_schema>
+
+  <api_endpoints_summary>
+    <web_panel>
+      - GET /login - Login page
+      - POST /login - Process login
+      - GET /logout - Logout
+      - GET / - Dashboard (message list)
+      - GET /message/<day> - Edit message form
+      - POST /message/<day> - Save message
+      - GET /message/<day>/preview - AJAX preview endpoint
+      - GET /welcome - Edit welcome message
+      - POST /welcome - Save welcome message
+    </web_panel>
+  </api_endpoints_summary>
+
+  <telegram_bot_commands>
+    <user_commands>
+      - /start - Begin receiving daily messages
+    </user_commands>
+    <admin_commands>
+      - /admin <password> - Unlock admin mode
+      - /welcome - View welcome message
+      - /setwelcome <text> - Set welcome message
+      - /day <number> - View message for day N
+      - /setday <number> <text> - Set message for day N
+    </admin_commands>
+  </telegram_bot_commands>
+
+  <ui_layout>
+    <web_panel>
+      <login_page>
+        - Centered login form
+        - Password input field
+        - Submit button
+        - Error message display
+      </login_page>
+      <dashboard>
+        - Header with title and logout button
+        - Link to edit welcome message
+        - Table/list of 365 days showing:
+          - Day number
+          - First 50 chars of message (or "Empty" warning)
+          - Send time
+          - Edit button
+        - Pagination or scrollable list
+        - Visual indicator for empty messages (red/yellow)
+      </dashboard>
+      <edit_page>
+        - Day number header
+        - Textarea for message content
+        - Character counter (X/4096)
+        - Time picker for send time
+        - Preview button
+        - Save button
+        - Cancel/back button
+        - Preview modal showing Telegram-style message
+      </edit_page>
+    </web_panel>
+  </ui_layout>
+
+  <design_system>
+    <color_palette>
+      - Primary: #0088cc (Telegram blue)
+      - Background: #ffffff
+      - Text: #333333
+      - Warning: #ffcc00 (for empty messages)
+      - Error: #ff3b30
+      - Success: #34c759
+    </color_palette>
+    <typography>
+      - System fonts (sans-serif)
+      - Clean, readable design
+    </typography>
+  </design_system>
+
+  <implementation_steps>
+    <step number="1">
+      <title>Project Setup</title>
+      <tasks>
+        - Initialize Python project with virtual environment
+        - Set up PostgreSQL database
+        - Create database models with SQLAlchemy
+        - Configure environment variables
+      </tasks>
+    </step>
+    <step number="2">
+      <title>Telegram Bot Core</title>
+      <tasks>
+        - Set up aiogram bot structure
+        - Implement /start command with welcome message
+        - Auto-detect user timezone
+        - Store user in database
+      </tasks>
+    </step>
+    <step number="3">
+      <title>Admin Telegram Commands</title>
+      <tasks>
+        - Implement secret password admin authentication
+        - Create commands for viewing/editing welcome message
+        - Create commands for viewing/editing day messages
+      </tasks>
+    </step>
+    <step number="4">
+      <title>Web Admin Panel</title>
+      <tasks>
+        - Set up Flask application
+        - Create login/logout functionality
+        - Build dashboard with message list
+        - Create edit forms with preview
+        - Implement validation and saving
+      </tasks>
+    </step>
+    <step number="5">
+      <title>Message Scheduler</title>
+      <tasks>
+        - Configure APScheduler
+        - Implement timezone-aware message sending
+        - Handle user day progression
+        - Implement cycle restart after day 365
+      </tasks>
+    </step>
+    <step number="6">
+      <title>Edge Cases & Polish</title>
+      <tasks>
+        - Handle blocked/returned users
+        - Add validation warnings
+        - Test timezone handling
+        - Performance optimization
+      </tasks>
+    </step>
+  </implementation_steps>
+
+  <success_criteria>
+    <functionality>
+      - Users can start bot and receive welcome message
+      - Daily messages sent at correct times per timezone
+      - Admin can manage all content via Telegram and web panel
+      - System handles 365-day cycle correctly
+    </functionality>
+    <user_experience>
+      - Messages arrive at expected times
+      - Web panel is intuitive and easy to use
+      - Preview shows accurate representation
+    </user_experience>
+    <technical_quality>
+      - No message delivery failures
+      - Timezone handling is accurate
+      - Database operations are reliable
+      - Scheduler runs continuously without issues
+    </technical_quality>
+  </success_criteria>
+</project_specification>
