@@ -27,6 +27,9 @@ class Config:
     FLASK_PORT: int = int(os.getenv("FLASK_PORT", "5000"))
     FLASK_DEBUG: bool = os.getenv("FLASK_DEBUG", "False").lower() == "true"
 
+    # Session timeout in minutes (default: 30 minutes)
+    SESSION_TIMEOUT_MINUTES: int = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
+
     # Scheduler
     SCHEDULER_TIMEZONE: str = os.getenv("SCHEDULER_TIMEZONE", "UTC")
 
