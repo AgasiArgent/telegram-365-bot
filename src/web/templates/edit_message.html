@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Day {{ day }} - Telegram 365 Bot{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .edit-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .edit-header h2 {
+        color: var(--primary);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+
+    .char-counter {
+        text-align: right;
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .char-counter.warning {
+        color: var(--warning);
+    }
+
+    .char-counter.error {
+        color: var(--error);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .button-group .btn {
+        flex: 1;
+    }
+
+    /* Preview Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .telegram-preview {
+        background: #e1ffc7;
+        padding: 15px;
+        border-radius: 10px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    @media (max-width: 768px) {
+        .button-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block header %}
+<header>
+    <h1>Telegram 365 Bot - Admin</h1>
+    <a href="{{ url_for('main.logout') }}">Logout</a>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-header">
+        <h2>Day {{ day }}</h2>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <form method="post" id="editForm">
+        <div class="form-group">
+            <label for="content">Message Content</label>
+            <textarea id="content" name="content" maxlength="{{ max_length }}">{{ message.content if message else '' }}</textarea>
+            <div class="char-counter" id="charCounter">
+                <span id="currentLength">{{ (message.content|length) if message and message.content else 0 }}</span>/{{ max_length }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="send_time">Send Time</label>
+            <input type="time" id="send_time" name="send_time"
+                   value="{{ message.send_time.strftime('%H:%M') if message and message.send_time else '09:00' }}">
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="openPreview()">Preview</button>
+            <button type="submit" class="btn btn-success">Save Message</button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal" id="previewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Message Preview</h3>
+            <button class="modal-close" onclick="closePreview()">&times;</button>
+        </div>
+        <div class="telegram-preview" id="previewContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const textarea = document.getElementById('content');
+    const charCounter = document.getElementById('charCounter');
+    const currentLength = document.getElementById('currentLength');
+    const maxLength = {{ max_length }};
+
+    textarea.addEventListener('input', updateCounter);
+
+    function updateCounter() {
+        const length = textarea.value.length;
+        currentLength.textContent = length;
+
+        charCounter.classList.remove('warning', 'error');
+        if (length >= maxLength) {
+            charCounter.classList.add('error');
+        } else if (length >= maxLength * 0.9) {
+            charCounter.classList.add('warning');
+        }
+    }
+
+    function openPreview() {
+        const content = textarea.value || '(No content)';
+        document.getElementById('previewContent').textContent = content;
+        document.getElementById('previewModal').classList.add('active');
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').classList.remove('active');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('previewModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePreview();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePreview();
+        }
+    });
+</script>
+{% endblock %}

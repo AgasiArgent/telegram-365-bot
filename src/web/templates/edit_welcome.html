@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Welcome Message - Telegram 365 Bot{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .edit-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .edit-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .edit-header h2 {
+        color: var(--primary);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+
+    .char-counter {
+        text-align: right;
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .char-counter.warning {
+        color: var(--warning);
+    }
+
+    .char-counter.error {
+        color: var(--error);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .button-group .btn {
+        flex: 1;
+    }
+
+    @media (max-width: 768px) {
+        .button-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block header %}
+<header>
+    <h1>Telegram 365 Bot - Admin</h1>
+    <a href="{{ url_for('main.logout') }}">Logout</a>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-header">
+        <h2>Welcome Message</h2>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <form method="post">
+        <div class="form-group">
+            <label for="content">Welcome Message Content</label>
+            <textarea id="content" name="content" maxlength="{{ max_length }}">{{ content }}</textarea>
+            <div class="char-counter" id="charCounter">
+                <span id="currentLength">{{ content|length if content else 0 }}</span>/{{ max_length }}
+            </div>
+        </div>
+
+        <p style="color: #666; margin-bottom: 20px;">
+            This message is sent to new users when they first start the bot.
+        </p>
+
+        <div class="button-group">
+            <button type="submit" class="btn btn-success">Save Message</button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const textarea = document.getElementById('content');
+    const charCounter = document.getElementById('charCounter');
+    const currentLength = document.getElementById('currentLength');
+    const maxLength = {{ max_length }};
+
+    textarea.addEventListener('input', updateCounter);
+
+    function updateCounter() {
+        const length = textarea.value.length;
+        currentLength.textContent = length;
+
+        charCounter.classList.remove('warning', 'error');
+        if (length >= maxLength) {
+            charCounter.classList.add('error');
+        } else if (length >= maxLength * 0.9) {
+            charCounter.classList.add('warning');
+        }
+    }
+</script>
+{% endblock %}
