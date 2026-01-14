@@ -26,10 +26,6 @@ async def send_daily_messages() -> None:
 
         for user in users:
             try:
-                # Skip if already received message today
-                if user.last_message_date == date.today():
-                    continue
-
                 # Get user's timezone
                 try:
                     user_tz = pytz.timezone(user.timezone or "UTC")
@@ -38,6 +34,11 @@ async def send_daily_messages() -> None:
 
                 # Get current time in user's timezone
                 user_now = datetime.now(user_tz)
+                user_today = user_now.date()
+
+                # Skip if already received message today (in user's timezone!)
+                if user.last_message_date == user_today:
+                    continue
 
                 # Get message for user's current day
                 message = queries.get_message_by_day(db, user.current_day)
@@ -59,8 +60,8 @@ async def send_daily_messages() -> None:
                                 f"Sent day {user.current_day} message to user {user.telegram_id}"
                             )
 
-                            # Update user's day
-                            queries.update_user_day(db, user)
+                            # Update user's day (pass user's timezone date)
+                            queries.update_user_day(db, user, user_today)
 
                         except Exception as e:
                             logger.error(

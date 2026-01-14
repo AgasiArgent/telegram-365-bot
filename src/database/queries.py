@@ -34,9 +34,9 @@ def create_user(
     return user
 
 
-def update_user_day(db: Session, user: User) -> User:
+def update_user_day(db: Session, user: User, user_date: date = None) -> User:
     """Increment user's current day, cycling back to 1 after 365."""
-    user.last_message_date = date.today()
+    user.last_message_date = user_date or date.today()
     if user.current_day >= config.TOTAL_DAYS:
         user.current_day = 1
     else:

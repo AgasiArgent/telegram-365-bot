@@ -186,6 +186,56 @@ async def cmd_setday(message: Message) -> None:
         await message.answer(f"Day {day_number} message updated successfully.")
 
 
+@router.message(Command("settime"))
+async def cmd_settime(message: Message) -> None:
+    """Handle /settime <day> <HH:MM> command - set send time for a day (admin only)."""
+    telegram_id = message.from_user.id
+
+    with get_db() as db:
+        if not queries.is_admin(db, telegram_id):
+            return
+
+        # Extract day number and time
+        args = message.text.split()
+        if len(args) < 3:
+            await message.answer("Usage: /settime <day> <HH:MM>\nExample: /settime 1 14:30")
+            return
+
+        try:
+            day_number = int(args[1])
+        except ValueError:
+            await message.answer("Please provide a valid day number (1-365).")
+            return
+
+        if day_number < 1 or day_number > config.TOTAL_DAYS:
+            await message.answer(f"Day number must be between 1 and {config.TOTAL_DAYS}.")
+            return
+
+        # Parse time
+        time_str = args[2].strip()
+        try:
+            parts = time_str.split(":")
+            if len(parts) != 2:
+                raise ValueError("Invalid format")
+            hour = int(parts[0])
+            minute = int(parts[1])
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                raise ValueError("Invalid time values")
+            send_time = dt_time(hour, minute)
+        except (ValueError, IndexError):
+            await message.answer("Invalid time format. Use HH:MM (e.g., 14:30)")
+            return
+
+        # Get current message content to preserve it
+        msg = queries.get_message_by_day(db, day_number)
+        if msg:
+            queries.update_message(db, day_number, msg.content, send_time)
+            logger.info(f"Day {day_number} time set to {time_str} by admin {telegram_id}")
+            await message.answer(f"Day {day_number} send time set to {time_str}.")
+        else:
+            await message.answer(f"No message found for day {day_number}.")
+
+
 def setup_handlers(dp) -> None:
     """Register all handlers with the dispatcher."""
     dp.include_router(router)
