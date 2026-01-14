@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: telegram-365-bot
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - DATABASE_URL=postgresql://bot:bot@db:5432/telegram_365_bot
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - WEB_ADMIN_PASSWORD=${WEB_ADMIN_PASSWORD:-webadmin123}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - FLASK_HOST=0.0.0.0
+      - FLASK_PORT=5000
+      - SCHEDULER_TIMEZONE=${SCHEDULER_TIMEZONE:-UTC}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: telegram-365-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=bot
+      - POSTGRES_PASSWORD=bot
+      - POSTGRES_DB=telegram_365_bot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bot -d telegram_365_bot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
